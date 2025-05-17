@@ -14,10 +14,14 @@ import { Sun, User, Mail, Lock, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function SignupPage() {
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const router = useRouter()
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
+    phoneNumber: "",
+    nationalId: "",
     password: "",
     confirmPassword: "",
   })
@@ -25,14 +29,24 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [touched, setTouched] = useState({
-    name: false,
+    firstName: false,
+    lastName: false,
     email: false,
+    phoneNumber: false,
+    nationalId: false,
     password: false,
     confirmPassword: false,
   })
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   const isValidPassword = (password: string) => password.length >= 8
+  const isValidKenyanPhone = (phone: string) => {
+
+    const cleaned = phone.replace(/\D/g, "")
+    if (/^(07|01)\d{8}$/.test(cleaned)) return true
+    if (/^254[17]\d{8}$/.test(cleaned)) return true
+    return false
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -46,14 +60,23 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validate form
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phoneNumber || !formData.nationalId || !formData.password || !formData.confirmPassword) {
       setError("Please fill in all required fields")
       return
     }
 
     if (!isValidEmail(formData.email)) {
       setError("Please enter a valid email address")
+      return
+    }
+
+    if (!isValidKenyanPhone(formData.phoneNumber)) {
+      setError("Please enter a valid Kenyan phone number")
+      return
+    }
+
+    if (!/^\d{6,10}$/.test(formData.nationalId)) {
+      setError("Please enter a valid National ID (6-10 digits)")
       return
     }
 
@@ -76,12 +99,46 @@ export default function SignupPage() {
     setError("")
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // For demo purposes, redirect to login
-      router.push("/login")
+      const payload = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        status: "active",
+        email: formData.email.trim(),
+        password: formData.password,
+        phoneNumber: formData.phoneNumber.replace(/\D/g, ""),
+        nationalId: formData.nationalId.trim(),
+        roles: ["employee"],
+        dateOfBirth: "2001-01-01",
+        position: "employee",
+        employmentEndDate: "2024-12-31",
+        employmentType: "full-time",
+      }
+      const res = await fetch("https://ofgen.cognitron.co.ke/ofgen/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        let message = "Registration failed. Please try again."
+        try {
+          const data = await res.json()
+          if (data && data.message) message = Array.isArray(data.message) ? data.message.join(", ") : data.message
+        } catch { }
+        setError(message)
+        setIsLoading(false)
+        return
+      }
+      setRegistrationSuccess(true)
+      setIsLoading(false)
+      setTimeout(() => {
+        router.push("/login")
+      }, 4000) // 4 seconds
+      return
     } catch (err) {
+      console.log(err)
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -142,32 +199,101 @@ export default function SignupPage() {
               <CardDescription>Enter your information to get started</CardDescription>
             </CardHeader>
             <CardContent>
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+              {registrationSuccess ? (
+                <Alert variant="default" className="mb-4 border-green-500 text-green-700">
+                  <Sun className="h-4 w-4 text-green-600" />
+                  <AlertDescription>
+                    Registration successful! Redirecting to login page...
+                  </AlertDescription>
                 </Alert>
-              )}
+              ) : null}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative">
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={handleChange}
-                      onBlur={() => handleBlur("name")}
-                      required
-                      className={`pl-10 border-green-200 focus-visible:ring-green-500 ${
-                        touched.name && !formData.name ? "border-red-500" : ""
-                      }`}
-                    />
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              {!registrationSuccess && (
+                <>
+                  {error && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-2">
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <div className="relative">
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        placeholder="Jane"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        onBlur={() => handleBlur("firstName")}
+                        required
+                        className={`pl-10 border-green-200 focus-visible:ring-green-500 ${touched.firstName && !formData.firstName ? "border-red-500" : ""}`}
+                      />
+                      <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {touched.firstName && !formData.firstName && <p className="text-sm text-red-500 mt-1">First name is required</p>}
                   </div>
-                  {touched.name && !formData.name && <p className="text-sm text-red-500 mt-1">Name is required</p>}
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <div className="relative">
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        placeholder="Wanjiku"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        onBlur={() => handleBlur("lastName")}
+                        required
+                        className={`pl-10 border-green-200 focus-visible:ring-green-500 ${touched.lastName && !formData.lastName ? "border-red-500" : ""}`}
+                      />
+                      <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {touched.lastName && !formData.lastName && <p className="text-sm text-red-500 mt-1">Last name is required</p>}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <div className="relative">
+                      <Input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        placeholder="0712345678 or 254712345678"
+                        value={formData.phoneNumber}
+                        onChange={handleChange}
+                        onBlur={() => handleBlur("phoneNumber")}
+                        required
+                        className={`pl-10 border-green-200 focus-visible:ring-green-500 ${touched.phoneNumber && formData.phoneNumber && !isValidKenyanPhone(formData.phoneNumber) ? "border-red-500" : ""}`}
+                      />
+                      <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {touched.phoneNumber && formData.phoneNumber && !isValidKenyanPhone(formData.phoneNumber) && (
+                      <p className="text-sm text-red-500 mt-1">Enter a valid Kenyan phone number</p>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="nationalId">National ID</Label>
+                    <div className="relative">
+                      <Input
+                        id="nationalId"
+                        name="nationalId"
+                        placeholder="e.g. 23456789"
+                        value={formData.nationalId}
+                        onChange={handleChange}
+                        onBlur={() => handleBlur("nationalId")}
+                        required
+                        className={`pl-10 border-green-200 focus-visible:ring-green-500 ${touched.nationalId && formData.nationalId && !/^\d{6,10}$/.test(formData.nationalId) ? "border-red-500" : ""}`}
+                      />
+                      <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {touched.nationalId && formData.nationalId && !/^\d{6,10}$/.test(formData.nationalId) && (
+                      <p className="text-sm text-red-500 mt-1">Enter a valid National ID (6-10 digits)</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -182,9 +308,8 @@ export default function SignupPage() {
                       onChange={handleChange}
                       onBlur={() => handleBlur("email")}
                       required
-                      className={`pl-10 border-green-200 focus-visible:ring-green-500 ${
-                        touched.email && (!isValidEmail(formData.email) && formData.email) ? "border-red-500" : ""
-                      }`}
+                      className={`pl-10 border-green-200 focus-visible:ring-green-500 ${touched.email && (!isValidEmail(formData.email) && formData.email) ? "border-red-500" : ""
+                        }`}
                     />
                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   </div>
@@ -192,59 +317,57 @@ export default function SignupPage() {
                     <p className="text-sm text-red-500 mt-1">Please enter a valid email address</p>
                   )}
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      onBlur={() => handleBlur("password")}
-                      required
-                      className={`pl-10 border-green-200 focus-visible:ring-green-500 ${
-                        touched.password && (!isValidPassword(formData.password) && formData.password)
+                <div className="flex gap-2 items-center">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        onBlur={() => handleBlur("password")}
+                        required
+                        className={`pl-10 border-green-200 focus-visible:ring-green-500 ${touched.password && (!isValidPassword(formData.password) && formData.password)
                           ? "border-red-500"
                           : ""
-                      }`}
-                    />
-                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  </div>
-                  {touched.password && !isValidPassword(formData.password) && formData.password && (
-                    <p className="text-sm text-red-500 mt-1">Password must be at least 8 characters long</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      onBlur={() => handleBlur("confirmPassword")}
-                      required
-                      className={`pl-10 border-green-200 focus-visible:ring-green-500 ${
-                        touched.confirmPassword &&
-                        formData.confirmPassword &&
-                        formData.password !== formData.confirmPassword
-                          ? "border-red-500"
-                          : ""
-                      }`}
-                    />
-                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  </div>
-                  {touched.confirmPassword &&
-                    formData.confirmPassword &&
-                    formData.password !== formData.confirmPassword && (
-                      <p className="text-sm text-red-500 mt-1">Passwords do not match</p>
+                          }`}
+                      />
+                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {touched.password && !isValidPassword(formData.password) && formData.password && (
+                      <p className="text-sm text-red-500 mt-1">Password must be at least 8 characters long</p>
                     )}
-                </div>
+                  </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        onBlur={() => handleBlur("confirmPassword")}
+                        required
+                        className={`pl-10 border-green-200 focus-visible:ring-green-500 ${touched.confirmPassword &&
+                          formData.confirmPassword &&
+                          formData.password !== formData.confirmPassword
+                          ? "border-red-500"
+                          : ""
+                          }`}
+                      />
+                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    {touched.confirmPassword &&
+                      formData.confirmPassword &&
+                      formData.password !== formData.confirmPassword && (
+                        <p className="text-sm text-red-500 mt-1">Passwords do not match</p>
+                      )}
+                  </div>
+                </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="terms"
@@ -266,6 +389,8 @@ export default function SignupPage() {
                   {isLoading ? "Creating account..." : "Create account"}
                 </Button>
               </form>
+                </>
+              )}
             </CardContent>
 
             <CardFooter>

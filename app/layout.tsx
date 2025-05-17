@@ -14,8 +14,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Ofgen Solar Dashboard",
-  description: "Monitor solar installations across Kenya",
-  generator: 'v0.dev'
+  description: "Monitor solar installations across Kenya"
 }
 
 export default function RootLayout({

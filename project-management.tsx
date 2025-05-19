@@ -1244,7 +1244,7 @@ export default function ProjectManagement() {
           setIsSheetOpen(open)
         }}
       >
-        <SheetContent side="right" className="w-full sm:w-[640px] md:w-[768px] h-full p-0 flex flex-col">
+        <SheetContent side="right" className="w-full sm:w-[700px] md:w-[800px] h-full p-0 flex flex-col">
           {selectedProject && (
             <>
               <div className="px-6 py-6 border-b">
@@ -1322,8 +1322,8 @@ export default function ProjectManagement() {
                             <Dialog open={showTemplateMilestones} onOpenChange={setShowTemplateMilestones}>
                               <DialogTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                  <PlusCircle className="mr-2 h-4 w-4" />
-                                  Add Template Milestones
+                                  <PlusCircle className="text-wrap mr-2 h-4 w-4" />
+                                  Add Template
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="max-h-[70vh] overflow-y-auto">

@@ -26,7 +26,7 @@ export default function DashboardPage() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
               <MetricCard
                 title="Total Energy Generated"
                 value="256.4 kWh"
@@ -41,20 +41,20 @@ export default function DashboardPage() {
                 trend="neutral"
                 icon={<Sun className="h-4 w-4" />}
               />
-              <MetricCard
+              {/* <MetricCard
                 title="Average Battery Level"
                 value="78%"
                 description="-3% from yesterday"
                 trend="down"
                 icon={<Battery className="h-4 w-4" />}
-              />
-              <MetricCard
+              /> */}
+              {/* <MetricCard
                 title="Weather Conditions"
                 value="Mostly Sunny"
                 description="Across most sites"
                 trend="neutral"
                 icon={<CloudSun className="h-4 w-4" />}
-              />
+              /> */}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -107,7 +107,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Maintenance Schedule</CardTitle>
                   <CardDescription>Upcoming maintenance visits</CardDescription>
@@ -129,9 +129,9 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Recent Alerts</CardTitle>
                   <CardDescription>System notifications</CardDescription>
@@ -159,8 +159,8 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </CardContent>
-              </Card>
-
+              </Card> */}
+{/* 
               <Card>
                 <CardHeader>
                   <CardTitle>Weather Forecast</CardTitle>
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
           </TabsContent>
 
@@ -229,7 +229,7 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="notifications">
+          {/* <TabsContent value="notifications">
             <Card>
               <CardHeader>
                 <CardTitle>Notifications Content</CardTitle>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                 <p>Notifications dashboard content will be displayed here.</p>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </DashboardLayout>

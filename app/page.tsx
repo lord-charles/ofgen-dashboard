@@ -1,5 +1,5 @@
-import DashboardPage from "@/dashboard-page"
+import ProjectsPage from "./projects/page"
 
 export default function Home() {
-  return <DashboardPage />
+  return <ProjectsPage />
 }

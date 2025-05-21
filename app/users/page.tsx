@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import DashboardLayout from "@/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getAllUsers, deleteUserById } from "../api/users"
 
 // User types
 type UserRole = "contractor" | "engineer" | "management" | "client"
@@ -57,111 +58,10 @@ type User = {
   createdAt: string
 }
 
-// Mock data for users
-const generateMockUsers = (): User[] => {
-  const roles: UserRole[] = ["contractor", "engineer", "management", "client"]
-  const statuses: User["status"][] = ["active", "inactive", "pending"]
-  const companies = ["Ofgen Solar", "SunTech Kenya", "EcoSolar Ltd", "GreenPower Inc", "Solar Solutions"]
-  const projects = [
-    "Nairobi Solar Project 1",
-    "Mombasa Solar Project 2",
-    "Kisumu Solar Project 3",
-    "Nakuru Solar Project 4",
-    "Eldoret Solar Project 5",
-  ]
-  const sites = [
-    "Nairobi Central",
-    "Mombasa Port",
-    "Kisumu Lake",
-    "Nakuru East",
-    "Eldoret North",
-    "Nairobi South",
-    "Mombasa South",
-  ]
-
-  const users: User[] = []
-
-  // Generate 50 mock users
-  for (let i = 0; i < 50; i++) {
-    const role = roles[Math.floor(Math.random() * roles.length)]
-    const firstName = ["John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Linda", "William", "Elizabeth"][
-      Math.floor(Math.random() * 10)
-    ]
-    const lastName = [
-      "Smith",
-      "Johnson",
-      "Williams",
-      "Brown",
-      "Jones",
-      "Miller",
-      "Davis",
-      "Garcia",
-      "Rodriguez",
-      "Wilson",
-    ][Math.floor(Math.random() * 10)]
-    const name = `${firstName} ${lastName}`
-    const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${role === "management" ? "ofgen.co.ke" : companies[Math.floor(Math.random() * companies.length)].toLowerCase().replace(/\s+/g, "")}.com`
-
-    // Assign random projects and sites based on role
-    let userProjects: string[] = []
-    const userSites: string[] = []
-
-    if (role === "contractor" || role === "engineer") {
-      // Assign 1-3 projects
-      const projectCount = 1 + Math.floor(Math.random() * 3)
-      for (let j = 0; j < projectCount; j++) {
-        const project = projects[Math.floor(Math.random() * projects.length)]
-        if (!userProjects.includes(project)) {
-          userProjects.push(project)
-        }
-      }
-
-      // Assign 1-4 sites
-      const siteCount = 1 + Math.floor(Math.random() * 4)
-      for (let j = 0; j < siteCount; j++) {
-        const site = sites[Math.floor(Math.random() * sites.length)]
-        if (!userSites.includes(site)) {
-          userSites.push(site)
-        }
-      }
-    } else if (role === "client") {
-      // Clients typically have 1 project
-      userProjects = [projects[Math.floor(Math.random() * projects.length)]]
-
-      // And 1-2 sites
-      const siteCount = 1 + Math.floor(Math.random() * 2)
-      for (let j = 0; j < siteCount; j++) {
-        const site = sites[Math.floor(Math.random() * sites.length)]
-        if (!userSites.includes(site)) {
-          userSites.push(site)
-        }
-      }
-    }
-
-    // Create the user
-    users.push({
-      id: `USER-${1000 + i}`,
-      name,
-      email,
-      phone: `+254 7${Math.floor(Math.random() * 100000000)}`,
-      role,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      company: role === "management" ? "Ofgen Solar" : companies[Math.floor(Math.random() * companies.length)],
-      projects: userProjects.length > 0 ? userProjects : undefined,
-      sites: userSites.length > 0 ? userSites : undefined,
-      lastActive: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)).toISOString(),
-      createdAt: new Date(Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000)).toISOString(),
-    })
-  }
-
-  return users
-}
-
-const MOCK_USERS = generateMockUsers()
-
 export default function UsersPage() {
   const router = useRouter()
-  const [users, setUsers] = useState<User[]>(MOCK_USERS)
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -171,6 +71,14 @@ export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("all")
 
   const usersPerPage = 10
+
+  useEffect(() => {
+    setLoading(true)
+    getAllUsers()
+      .then((data) => setUsers(data))
+      .catch(() => setUsers([]))
+      .finally(() => setLoading(false))
+  }, [])
 
   // Filter users based on search, role, status, and active tab
   const filteredUsers = users.filter((user) => {
@@ -200,11 +108,19 @@ export default function UsersPage() {
   }
 
   // Handle delete user
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (selectedUser) {
-      setUsers(users.filter((user) => user.id !== selectedUser.id))
-      setShowDeleteDialog(false)
-      setSelectedUser(null)
+      setLoading(true)
+      try {
+        await deleteUserById(selectedUser.id)
+        setUsers(users.filter((user) => user.id !== selectedUser.id))
+        setShowDeleteDialog(false)
+        setSelectedUser(null)
+      } catch (error) {
+        // Optionally show toast
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -271,6 +187,17 @@ export default function UsersPage() {
       month: "short",
       day: "numeric",
     })
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mb-4"></div>
+          <p className="text-lg text-muted-foreground">Loading users...</p>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -343,9 +270,9 @@ export default function UsersPage() {
             <TabsList>
               <TabsTrigger value="all">All Users</TabsTrigger>
               <TabsTrigger value="contractor">Contractors</TabsTrigger>
-              <TabsTrigger value="engineer">Engineers</TabsTrigger>
+              {/* <TabsTrigger value="engineer">Engineers</TabsTrigger> */}
               <TabsTrigger value="management">Management</TabsTrigger>
-              <TabsTrigger value="client">Clients</TabsTrigger>
+              {/* <TabsTrigger value="client">Clients</TabsTrigger> */}
             </TabsList>
           </Tabs>
 
@@ -444,9 +371,9 @@ export default function UsersPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    {/* <TableCell colSpan={7} className="h-24 text-center">
                       No users found matching your filters.
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 )}
               </TableBody>

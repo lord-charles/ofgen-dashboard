@@ -5,6 +5,8 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
+import { useMap, useMapEvents } from 'react-leaflet'
+import "leaflet/dist/leaflet.css"
 
 // Define types for the map components that will be dynamically imported
 type MapProps = {
@@ -82,15 +84,7 @@ const Popup = dynamic(
   { ssr: false }
 )
 
-const useMap = dynamic(
-  () => import('react-leaflet').then((mod) => mod.useMap),
-  { ssr: false }
-)
 
-const useMapEvents = dynamic(
-  () => import('react-leaflet').then((mod) => mod.useMapEvents),
-  { ssr: false }
-)
 
 // Component to recenter map when coordinates change
 function ChangeMapView({ latitude, longitude, zoom }: { latitude?: number; longitude?: number; zoom?: number }) {

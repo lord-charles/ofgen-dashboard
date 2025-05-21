@@ -342,11 +342,11 @@ export default function SiteDetailsPage() {
         </div>
 
         {/* Tabs for different sections */}
-        <Tabs defaultValue="performance" className="w-full">
+        <Tabs defaultValue="team" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="weather">Weather</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            {/* <TabsTrigger value="performance">Performance</TabsTrigger> */}
+            {/* <TabsTrigger value="weather">Weather</TabsTrigger> */}
+            {/* <TabsTrigger value="alerts">Alerts</TabsTrigger> */}
             <TabsTrigger value="team">Team</TabsTrigger>
             <TabsTrigger value="service-orders">Service Orders</TabsTrigger>
           </TabsList>

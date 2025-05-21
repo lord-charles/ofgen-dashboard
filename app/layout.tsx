@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster";
 import NextAuthProvider from "./session-provider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth"
+import 'leaflet/dist/leaflet.css'
+
 
 
 

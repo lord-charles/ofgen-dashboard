@@ -2,14 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import DashboardLayout from "@/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Pagination,
@@ -19,7 +18,20 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { MapPin, Search, Plus, Filter, Eye, Edit, ExternalLink, Upload } from "lucide-react"
+import {
+  MapPin,
+  Search,
+  Plus,
+  Filter,
+  Eye,
+  Edit,
+  ExternalLink,
+  Upload,
+  BarChart3,
+  Zap,
+  Calendar,
+  MapPinned,
+} from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -30,56 +42,57 @@ import {
 } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import SiteMap from "@/components/site-map"
+import { Progress } from "@/components/ui/progress"
+import { fetchLocations } from "../api/locations"
 
-// Mock data for sites
-const MOCK_SITES = Array.from({ length: 50 }, (_, i) => {
-  const id = `SITE-${1000 + i}`
-  const counties = [
-    "Nairobi",
-    "Mombasa",
-    "Kisumu",
-    "Nakuru",
-    "Kiambu",
-    "Uasin Gishu",
-    "Meru",
-    "Kakamega",
-    "Kilifi",
-    "Machakos",
-  ]
-  const county = counties[Math.floor(Math.random() * counties.length)]
-  const isActive = Math.random() > 0.2
-
-  // Generate random coordinates within Kenya
-  const latitude = -1.2921 + (Math.random() * 2 - 1)
-  const longitude = 36.8219 + (Math.random() * 2 - 1)
-
-  return {
-    id,
-    name: `${county} Solar Site ${i + 1}`,
-    county,
-    address: `${i + 1} Solar Avenue, ${county}`,
-    capacity: (Math.random() * 9 + 1).toFixed(2),
-    latitude,
-    longitude,
-    isActive,
-    createdAt: new Date(Date.now() - Math.floor(Math.random() * 90 * 24 * 60 * 60 * 1000)).toISOString(),
+// Define the type for a site/location
+interface Site {
+  id: string
+  name: string
+  county: string
+  address: string
+  capacity?: string
+  isActive?: boolean
+  createdAt?: string
+  coordinates: {
+    lat: number
+    lng: number
   }
-})
+}
 
 export default function SitesPage() {
   const router = useRouter()
-  const [sites, setSites] = useState(MOCK_SITES)
+  const [sites, setSites] = useState<Site[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [countyFilter, setCountyFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
-  const [selectedSite, setSelectedSite] = useState<(typeof MOCK_SITES)[0] | null>(null)
   const [showMapDialog, setShowMapDialog] = useState(false)
+  const [selectedSite, setSelectedSite] = useState<Site | null>(null)
 
   const sitesPerPage = 10
 
   // Get unique counties for filtering
   const counties = Array.from(new Set(sites.map((site) => site.county)))
+
+  // Calculate summary metrics
+  const totalSites = sites.length
+  const activeSites = sites.filter((site) => site.isActive).length
+  // Fix: handle optional fields for capacity and createdAt
+  const totalCapacity = sites.reduce((sum, site) => sum + Number.parseFloat(site.capacity ?? '0'), 0).toFixed(2)
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const recentSites = sites.filter((site) => site.createdAt && new Date(site.createdAt) > thirtyDaysAgo).length
+
+  // Get county distribution (top 5)
+  const countyDistribution = counties
+    .map((county) => ({
+      name: county,
+      count: sites.filter((site) => site.county === county).length,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
 
   // Filter sites based on search and filters
   const filteredSites = sites.filter((site) => {
@@ -110,14 +123,40 @@ export default function SitesPage() {
   }
 
   // View site on map
-  const handleViewOnMap = (site: (typeof MOCK_SITES)[0]) => {
+  const handleViewOnMap = (site: Site) => {
     setSelectedSite(site)
     setShowMapDialog(true)
   }
 
   // Open in Google Maps
-  const openInGoogleMaps = (latitude: number, longitude: number) => {
-    window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, "_blank")
+  const openInGoogleMaps = (lat: number, lng: number) => {
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank")
+  }
+
+  useEffect(() => {
+    const loadSites = async () => {
+      try {
+        const data = await fetchLocations()
+        setSites(data)
+      } catch (error) {
+        // Optionally handle error, e.g. show toast
+        setSites([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadSites()
+  }, [])
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mb-4"></div>
+          <p className="text-lg text-muted-foreground">Loading sites...</p>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -140,6 +179,63 @@ export default function SitesPage() {
           </div>
         </div>
 
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Sites Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Sites</CardTitle>
+              <MapPinned className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalSites}</div>
+              <p className="text-xs text-muted-foreground">Across {counties.length} counties</p>
+            </CardContent>
+          </Card>
+
+          {/* Active Sites Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Sites</CardTitle>
+              <Zap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeSites}</div>
+              <div className="flex items-center space-x-2">
+                <Progress value={(activeSites / totalSites) * 100} className="h-2" />
+                <div className="text-xs text-muted-foreground">{Math.round((activeSites / totalSites) * 100)}%</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Capacity Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Capacity</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalCapacity} kW</div>
+              <p className="text-xs text-muted-foreground">
+                Avg {(Number.parseFloat(totalCapacity) / totalSites).toFixed(2)} kW per site
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Recent Additions Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Recent Additions</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{recentSites}</div>
+              <p className="text-xs text-muted-foreground">Added in the last 30 days</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        
         <Card>
           <CardHeader className="pb-3">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -198,9 +294,8 @@ export default function SitesPage() {
                   <TableHead>Site ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>County</TableHead>
-                  <TableHead>Capacity (kW)</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Location</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Coordinates</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -211,20 +306,23 @@ export default function SitesPage() {
                       <TableCell className="font-medium">{site.id}</TableCell>
                       <TableCell>{site.name}</TableCell>
                       <TableCell>{site.county}</TableCell>
-                      <TableCell>{site.capacity}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{site.address}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={site.isActive ? "default" : "secondary"}
-                          className={site.isActive ? "bg-green-600" : "bg-slate-600"}
-                        >
-                          {site.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleViewOnMap(site)}>
-                          <MapPin className="h-4 w-4" />
-                          <span className="sr-only">View on map</span>
-                        </Button>
+                        <div className="flex items-center">
+                          <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
+                          <span className="text-xs">
+                            {site.coordinates.lat.toFixed(4)}, {site.coordinates.lng.toFixed(4)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 ml-1"
+                            onClick={() => handleViewOnMap(site)}
+                          >
+                            <Eye className="h-3 w-3" />
+                            <span className="sr-only">View on map</span>
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -258,7 +356,9 @@ export default function SitesPage() {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openInGoogleMaps(site.latitude, site.longitude)}>
+                            <DropdownMenuItem
+                              onClick={() => openInGoogleMaps(site.coordinates.lat, site.coordinates.lng)}
+                            >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Open in Google Maps
                             </DropdownMenuItem>
@@ -269,9 +369,9 @@ export default function SitesPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    {/* <TableCell colSpan={6} className="h-24 text-center">
                       No sites found matching your filters.
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 )}
               </TableBody>
@@ -335,8 +435,8 @@ export default function SitesPage() {
           <div className="h-[500px]">
             {selectedSite && (
               <SiteMap
-                latitude={selectedSite.latitude}
-                longitude={selectedSite.longitude}
+                latitude={selectedSite.coordinates.lat}
+                longitude={selectedSite.coordinates.lng}
                 zoom={14}
                 height="100%"
                 interactive={false}
@@ -344,13 +444,15 @@ export default function SitesPage() {
                   {
                     id: selectedSite.id,
                     name: selectedSite.name,
-                    latitude: selectedSite.latitude,
-                    longitude: selectedSite.longitude,
+                    latitude: selectedSite.coordinates.lat,
+                    longitude: selectedSite.coordinates.lng,
                     popupContent: (
                       <div>
                         <h3 className="font-medium">{selectedSite.name}</h3>
                         <p className="text-xs">{selectedSite.address}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Capacity: {selectedSite.capacity} kW</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {selectedSite.coordinates.lat.toFixed(6)}, {selectedSite.coordinates.lng.toFixed(6)}
+                        </p>
                       </div>
                     ),
                   },
@@ -362,7 +464,9 @@ export default function SitesPage() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => selectedSite && openInGoogleMaps(selectedSite.latitude, selectedSite.longitude)}
+              onClick={() =>
+                selectedSite && openInGoogleMaps(selectedSite.coordinates.lat, selectedSite.coordinates.lng)
+              }
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               Open in Google Maps

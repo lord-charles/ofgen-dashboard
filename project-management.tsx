@@ -1,9 +1,7 @@
 "use client"
 
 import { DialogTrigger } from "@/components/ui/dialog"
-
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { CheckCircle2, Clock, Filter, PlusCircle, Search, XCircle, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -43,8 +41,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { LineChart } from "@/components/ui/chart"
-import DashboardLayout from "./dashboard-layout"
 import { toast } from "@/components/ui/use-toast"
+import DashboardLayout from "./dashboard-layout"
+import { getProjects } from "@/app/api/projects"
 
 // Define types for our data
 type ProjectStatus = "Planned" | "In Progress" | "On Hold" | "Completed"
@@ -146,215 +145,9 @@ const MOCK_INVENTORY = [
   { id: "INV-1005", name: "Solar Cable 10m", category: "Cables & Wiring", quantity: 60 },
 ]
 
-// Mock data for projects
-const generateMockProjects = (): Project[] => {
-  const counties = [
-    "Nairobi",
-    "Mombasa",
-    "Kisumu",
-    "Nakuru",
-    "Kiambu",
-    "Uasin Gishu",
-    "Meru",
-    "Kakamega",
-    "Kilifi",
-    "Machakos",
-  ]
-
-  const statuses: ProjectStatus[] = ["Planned", "In Progress", "On Hold", "Completed"]
-
-  const generateMilestones = (projectId: string): Milestone[] => {
-    const milestoneCount = 3 + Math.floor(Math.random() * 3) // 3-5 milestones
-    const milestones: Milestone[] = []
-
-    for (let i = 0; i < milestoneCount; i++) {
-      const template = TEMPLATE_MILESTONES[i % TEMPLATE_MILESTONES.length]
-      const today = new Date()
-      const dueDate = new Date(today)
-      dueDate.setDate(today.getDate() + i * 14 + Math.floor(Math.random() * 10))
-
-      const status: MilestoneStatus =
-        i === 0
-          ? "Completed"
-          : i === 1
-            ? "In Progress"
-            : i === 2
-              ? Math.random() > 0.5
-                ? "Pending"
-                : "Delayed"
-              : "Pending"
-
-      milestones.push({
-        id: `${projectId}-m${i}`,
-        title: template.title,
-        description: template.description,
-        dueDate: dueDate.toISOString().split("T")[0],
-        completedDate:
-          status === "Completed"
-            ? new Date(dueDate.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 10).toISOString().split("T")[0]
-            : undefined,
-        status: status,
-      })
-    }
-
-    return milestones
-  }
-
-  const generateInventoryUsage = (projectId: string): InventoryUsage[] => {
-    const usageCount = Math.floor(Math.random() * 3) + 1 // 1-3 inventory items
-    const usages: InventoryUsage[] = []
-
-    for (let i = 0; i < usageCount; i++) {
-      const inventoryItem = MOCK_INVENTORY[Math.floor(Math.random() * MOCK_INVENTORY.length)]
-      const today = new Date()
-      const usageDate = new Date(today)
-      usageDate.setDate(today.getDate() - Math.floor(Math.random() * 30))
-
-      usages.push({
-        id: `${projectId}-inv${i}`,
-        itemId: inventoryItem.id,
-        itemName: inventoryItem.name,
-        quantity: Math.floor(Math.random() * 5) + 1,
-        dateUsed: usageDate.toISOString().split("T")[0],
-        usedBy: ["John Doe", "Jane Smith", "Robert Johnson"][Math.floor(Math.random() * 3)],
-      })
-    }
-
-    return usages
-  }
-
-  const generateRisks = (projectId: string): Risk[] => {
-    const riskCount = Math.floor(Math.random() * 3) // 0-2 risks
-    const risks: Risk[] = []
-    const riskLevels: RiskLevel[] = ["Low", "Medium", "High", "Critical"]
-    const riskStatuses: RiskStatus[] = ["Open", "Mitigated", "Closed", "Accepted"]
-
-    for (let i = 0; i < riskCount; i++) {
-      const today = new Date()
-      const identifiedDate = new Date(today)
-      identifiedDate.setDate(today.getDate() - Math.floor(Math.random() * 30))
-
-      const status = riskStatuses[Math.floor(Math.random() * riskStatuses.length)]
-      const resolvedDate =
-        status === "Mitigated" || status === "Closed"
-          ? new Date(identifiedDate.getTime() + Math.random() * 1000 * 60 * 60 * 24 * 15).toISOString().split("T")[0]
-          : undefined
-
-      risks.push({
-        id: `${projectId}-risk${i}`,
-        title: ["Weather Delay", "Permit Issues", "Supply Chain Delay", "Technical Challenge"][
-          Math.floor(Math.random() * 4)
-        ],
-        description: "Risk description details would go here.",
-        level: riskLevels[Math.floor(Math.random() * riskLevels.length)],
-        status: status,
-        identifiedDate: identifiedDate.toISOString().split("T")[0],
-        mitigationPlan: status !== "Open" ? "Mitigation plan details would go here." : undefined,
-        resolvedDate: resolvedDate,
-        owner: ["John Doe", "Jane Smith", "Robert Johnson"][Math.floor(Math.random() * 3)],
-      })
-    }
-
-    return risks
-  }
-
-  const generateTasks = (projectId: string, milestones: Milestone[]): Task[] => {
-    const tasks: Task[] = []
-
-    // Generate 1-2 tasks per milestone
-    milestones.forEach((milestone) => {
-      const taskCount = Math.floor(Math.random() * 2) + 1
-
-      for (let i = 0; i < taskCount; i++) {
-        const today = new Date()
-        const dueDate = new Date(today)
-        dueDate.setDate(today.getDate() + Math.floor(Math.random() * 14))
-
-        tasks.push({
-          id: `${projectId}-task-${milestone.id}-${i}`,
-          title: `Task for ${milestone.title}`,
-          description: `This is a task related to the ${milestone.title} milestone.`,
-          assignedTo: ["John Doe", "Jane Smith", "Robert Johnson"][Math.floor(Math.random() * 3)],
-          dueDate: dueDate.toISOString().split("T")[0],
-          status: ["To Do", "In Progress", "Completed"][Math.floor(Math.random() * 3)] as
-            | "To Do"
-            | "In Progress"
-            | "Completed",
-          milestoneId: milestone.id,
-        })
-      }
-    })
-
-    return tasks
-  }
-
-  const projects: Project[] = []
-
-  for (let i = 0; i < 500; i++) {
-    const today = new Date()
-    const startDate = new Date(today)
-    startDate.setDate(today.getDate() - Math.floor(Math.random() * 90))
-
-    const targetCompletionDate = new Date(startDate)
-    targetCompletionDate.setDate(startDate.getDate() + 90 + Math.floor(Math.random() * 60))
-
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
-    const progress =
-      status === "Planned"
-        ? Math.floor(Math.random() * 10)
-        : status === "In Progress"
-          ? 10 + Math.floor(Math.random() * 70)
-          : status === "On Hold"
-            ? 10 + Math.floor(Math.random() * 60)
-            : 100
-
-    const county = counties[Math.floor(Math.random() * counties.length)]
-    const locations = [
-      `${county} North`,
-      `${county} South`,
-      `${county} East`,
-      `${county} West`,
-      `${county} Central`,
-      `New ${county}`,
-    ]
-
-    const projectId = `OFGEN-${1000 + i}`
-    const milestones = generateMilestones(projectId)
-
-    const project: Project = {
-      id: projectId,
-      name: `${county} Solar Project ${(i % 10) + 1}`,
-      location: locations[Math.floor(Math.random() * locations.length)],
-      county: county,
-      capacity: `${(Math.random() * 9 + 1).toFixed(2)} kW`,
-      status: status,
-      startDate: startDate.toISOString().split("T")[0],
-      targetCompletionDate: targetCompletionDate.toISOString().split("T")[0],
-      actualCompletionDate:
-        status === "Completed"
-          ? new Date(targetCompletionDate.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 14)
-              .toISOString()
-              .split("T")[0]
-          : undefined,
-      progress: progress,
-      milestones: milestones,
-      inventoryUsage: generateInventoryUsage(projectId),
-      risks: generateRisks(projectId),
-      tasks: generateTasks(projectId, milestones),
-      users: [],
-    }
-
-    projects.push(project)
-  }
-
-  return projects
-}
-
-const mockProjects = generateMockProjects()
-
 export default function ProjectManagement() {
-  const [projects, setProjects] = useState<Project[]>(mockProjects)
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>(mockProjects)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("All")
   const [countyFilter, setCountyFilter] = useState<string>("All")
@@ -394,12 +187,23 @@ export default function ProjectManagement() {
   const [selectedTemplateMilestones, setSelectedTemplateMilestones] = useState<string[]>([])
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string>("")
-
-  const projectsPerPage = 10
-  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage)
-  const indexOfLastProject = currentPage * projectsPerPage
-  const indexOfFirstProject = indexOfLastProject - projectsPerPage
-  const currentProjects = filteredProjects.slice(indexOfFirstProject, indexOfLastProject)
+  const [newProject, setNewProject] = useState<Partial<Project>>({
+    name: "",
+    location: "",
+    county: "",
+    capacity: "",
+    status: "Planned",
+    startDate: "",
+    targetCompletionDate: "",
+    actualCompletionDate: "",
+    progress: 0,
+    milestones: [],
+    inventoryUsage: [],
+    risks: [],
+    tasks: [],
+    users: [],
+  })
+  const [loading, setLoading] = useState(true)
 
   // Get unique counties for filtering
   const counties = Array.from(new Set(projects.map((project) => project.county)))
@@ -832,14 +636,88 @@ export default function ProjectManagement() {
     }
   }, [isSheetOpen])
 
+  // Transform newProject before sending: users as array of IDs, remove id fields from milestones, inventoryUsage, risks, and tasks. Use this payload in the fetch body.
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Transform newProject to match API requirements
+    const payload = {
+      ...newProject,
+      users: (newProject.users || []).map((u: any) => typeof u === "string" ? u : u.id),
+      milestones: (newProject.milestones || []).map(({ id, ...rest }: any) => ({ ...rest })),
+      inventoryUsage: (newProject.inventoryUsage || []).map(({ id, ...rest }: any) => ({ ...rest })),
+      risks: (newProject.risks || []).map(({ id, ...rest }: any) => ({ ...rest })),
+      tasks: (newProject.tasks || []).map(({ id, ...rest }: any) => ({ ...rest })),
+    };
+    try {
+      const response = await fetch("/ofgen/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        alert("Project created successfully!");
+      } else {
+        const error = await response.json();
+        alert(`Error creating project: ${error.message}`);
+      }
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "message" in error) {
+        alert(`Network error: ${(error as any).message}`);
+      } else {
+        alert("Network error");
+      }
+    }
+  };
+
+  // Fetch projects data from the backend
+  useEffect(() => {
+    async function fetchProjects() {
+      setLoading(true)
+      try {
+        const data = await getProjects()
+        setProjects(data)
+        setFilteredProjects(data)
+      } catch (error) {
+        toast({
+          title: "Error loading projects",
+          description: error instanceof Error ? error.message : String(error),
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProjects()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Project Management</h1>
-          <p className="text-muted-foreground">
-            Track and manage solar installation projects and milestones across all sites
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Project Management</h1>
+              <p className="text-muted-foreground">
+                Track and manage solar installation projects and milestones across all sites
+              </p>
+            </div>
+            <Button asChild>
+              <a href="/projects/add">
+                <PlusCircle className="mr-2 h-5 w-5" />
+                Create Project
+              </a>
+            </Button>
+          </div>
         </div>
 
         {/* Dashboard Cards */}
@@ -1017,8 +895,8 @@ export default function ProjectManagement() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {currentProjects.length > 0 ? (
-                      currentProjects.map((project) => (
+                    {filteredProjects.length > 0 ? (
+                      filteredProjects.map((project) => (
                         <TableRow key={project.id}>
                           <TableCell className="font-medium">{project.id}</TableCell>
                           <TableCell>{project.name}</TableCell>
@@ -1045,7 +923,6 @@ export default function ProjectManagement() {
                             </div>
                           </TableCell>
                           <TableCell>{project.targetCompletionDate}</TableCell>
-
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm" onClick={() => handleViewDetails(project)}>
                               View Details
@@ -1055,9 +932,7 @@ export default function ProjectManagement() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-                          No projects found matching your filters.
-                        </TableCell>
+                       
                       </TableRow>
                     )}
                   </TableBody>
@@ -1066,46 +941,9 @@ export default function ProjectManagement() {
               <CardFooter className="border-t p-2">
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">
-                    Showing {indexOfFirstProject + 1}-{Math.min(indexOfLastProject, filteredProjects.length)} of{" "}
-                    {filteredProjects.length} projects
+                    Showing {filteredProjects.length} of {filteredProjects.length} projects
                   </p>
                 </div>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      // Show pages around the current page
-                      let pageNum = i + 1
-                      if (totalPages > 5) {
-                        if (currentPage > 3) {
-                          pageNum = currentPage - 3 + i
-                        }
-                        if (pageNum > totalPages - 4 && currentPage > totalPages - 2) {
-                          pageNum = totalPages - 4 + i
-                        }
-                      }
-
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <PaginationLink onClick={() => setCurrentPage(pageNum)} isActive={currentPage === pageNum}>
-                            {pageNum}
-                          </PaginationLink>
-                        </PaginationItem>
-                      )
-                    })}
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
               </CardFooter>
             </Card>
           </TabsContent>
@@ -1203,28 +1041,32 @@ export default function ProjectManagement() {
                     {/* This would typically be populated with real data - showing mock data for now */}
                     {[1, 2, 3, 4, 5].map((_, i) => {
                       const project = projects[i * 10]
-                      const milestone = project.milestones[0]
+                      const milestone = project?.milestones?.[0]
                       return (
                         <TableRow key={i}>
-                          <TableCell>{project.name}</TableCell>
-                          <TableCell>{milestone.title}</TableCell>
+                          <TableCell>{project ? project.name : "-"}</TableCell>
+                          <TableCell>{milestone ? milestone.title : "-"}</TableCell>
                           <TableCell>
-                            <Badge
-                              className={
-                                milestone.status === "Completed"
-                                  ? "bg-green-600"
-                                  : milestone.status === "In Progress"
-                                    ? "bg-blue-600"
-                                    : milestone.status === "Delayed"
-                                      ? "bg-red-600"
-                                      : "bg-slate-600"
-                              }
-                            >
-                              {milestone.status}
-                            </Badge>
+                            {milestone ? (
+                              <Badge
+                                className={
+                                  milestone.status === "Completed"
+                                    ? "bg-green-600"
+                                    : milestone.status === "In Progress"
+                                      ? "bg-blue-600"
+                                      : milestone.status === "Delayed"
+                                        ? "bg-red-600"
+                                        : "bg-slate-600"
+                                }
+                              >
+                                {milestone.status}
+                              </Badge>
+                            ) : (
+                              "-"
+                            )}
                           </TableCell>
-                          <TableCell>{milestone.completedDate || milestone.dueDate}</TableCell>
-                          <TableCell>{project.location}</TableCell>
+                          <TableCell>{milestone ? (milestone.completedDate || milestone.dueDate) : "-"}</TableCell>
+                          <TableCell>{project ? project.location : "-"}</TableCell>
                         </TableRow>
                       )
                     })}
@@ -1462,9 +1304,9 @@ export default function ProjectManagement() {
                                   <Label htmlFor="edit-title">Title</Label>
                                   <Input
                                     id="edit-title"
-                                    value={selectedMilestone.title}
+                                    value={selectedMilestone?.title || ""}
                                     onChange={(e) =>
-                                      setSelectedMilestone({
+                                      selectedMilestone && setSelectedMilestone({
                                         ...selectedMilestone,
                                         title: e.target.value,
                                       })
@@ -1475,9 +1317,9 @@ export default function ProjectManagement() {
                                   <Label htmlFor="edit-description">Description</Label>
                                   <Textarea
                                     id="edit-description"
-                                    value={selectedMilestone.description}
+                                    value={selectedMilestone?.description || ""}
                                     onChange={(e) =>
-                                      setSelectedMilestone({
+                                      selectedMilestone && setSelectedMilestone({
                                         ...selectedMilestone,
                                         description: e.target.value,
                                       })
@@ -1489,9 +1331,9 @@ export default function ProjectManagement() {
                                   <Input
                                     id="edit-due-date"
                                     type="date"
-                                    value={selectedMilestone.dueDate}
+                                    value={selectedMilestone?.dueDate || ""}
                                     onChange={(e) =>
-                                      setSelectedMilestone({
+                                      selectedMilestone && setSelectedMilestone({
                                         ...selectedMilestone,
                                         dueDate: e.target.value,
                                       })
@@ -1501,9 +1343,9 @@ export default function ProjectManagement() {
                                 <div className="grid gap-2">
                                   <Label htmlFor="edit-status">Status</Label>
                                   <Select
-                                    value={selectedMilestone.status}
+                                    value={selectedMilestone?.status || ""}
                                     onValueChange={(value) =>
-                                      setSelectedMilestone({
+                                      selectedMilestone && setSelectedMilestone({
                                         ...selectedMilestone,
                                         status: value as MilestoneStatus,
                                       })
@@ -1697,3 +1539,6 @@ export default function ProjectManagement() {
     </DashboardLayout>
   )
 }
+
+
+

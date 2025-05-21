@@ -73,9 +73,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <div className="flex-1 overflow-auto py-2">
           <nav className="grid gap-1 px-2">
-            <NavItem href="/" icon={<LayoutDashboard />} label="Dashboard" collapsed={!sidebarOpen} />
+            {/* <NavItem href="/" icon={<LayoutDashboard />} label="Dashboard" collapsed={!sidebarOpen} /> */}
 
             <NavGroupItem
+          
               icon={<LayoutDashboard />}
               label="Projects"
               collapsed={!sidebarOpen}

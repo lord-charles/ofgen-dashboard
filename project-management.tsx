@@ -96,18 +96,16 @@ type Task = {
 
 type User = {
   id: string
+  firstName: string
+  lastName: string
   name: string
   email: string
 }
 
-const MOCK_USERS: User[] = [
-  { id: "u1", name: "John Doe", email: "john@example.com" },
-  { id: "u2", name: "Jane Smith", email: "jane@example.com" },
-  { id: "u3", name: "Robert Johnson", email: "robert@example.com" },
-]
+
 
 type Project = {
-  id: string
+  _id: string
   name: string
   location: string
   county: string
@@ -217,7 +215,7 @@ export default function ProjectManagement() {
       filtered = filtered.filter(
         (project) =>
           project.name.toLowerCase().includes(term) ||
-          project.id.toLowerCase().includes(term) ||
+          project._id.toLowerCase().includes(term) ||
           project.location.toLowerCase().includes(term),
       )
     }
@@ -255,7 +253,7 @@ export default function ProjectManagement() {
     if (!selectedProject || !newMilestone.title || !newMilestone.dueDate) return
 
     const updatedMilestone: Milestone = {
-      id: `${selectedProject.id}-m${selectedProject.milestones.length + 1}`,
+      id: `${selectedProject._id}-m${selectedProject.milestones.length + 1}`,
       title: newMilestone.title || "",
       description: newMilestone.description || "",
       dueDate: newMilestone.dueDate || "",
@@ -269,7 +267,7 @@ export default function ProjectManagement() {
     }
 
     // Update the projects array
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
 
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
@@ -306,7 +304,7 @@ export default function ProjectManagement() {
     }
 
     // Update the projects array
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
 
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
@@ -333,7 +331,7 @@ export default function ProjectManagement() {
     }
 
     // Update the projects array
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
 
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
@@ -348,7 +346,7 @@ export default function ProjectManagement() {
   // Handle milestone status update
   const updateMilestoneStatus = (projectId: string, milestoneId: string, newStatus: MilestoneStatus) => {
     const updatedProjects = projects.map((project) => {
-      if (project.id !== projectId) return project
+      if (project._id !== projectId) return project
 
       const updatedMilestones = project.milestones.map((milestone) => {
         if (milestone.id !== milestoneId) return milestone
@@ -376,8 +374,8 @@ export default function ProjectManagement() {
     setFilteredProjects(updatedProjects)
 
     // Update selected project if it's the one being modified
-    if (selectedProject && selectedProject.id === projectId) {
-      const updatedProject = updatedProjects.find((p) => p.id === projectId)
+    if (selectedProject && selectedProject._id === projectId) {
+      const updatedProject = updatedProjects.find((p) => p._id === projectId)
       if (updatedProject) setSelectedProject(updatedProject)
     }
   }
@@ -390,7 +388,7 @@ export default function ProjectManagement() {
     if (!inventoryItem) return
 
     const updatedInventoryUsage: InventoryUsage = {
-      id: `${selectedProject.id}-inv${selectedProject.inventoryUsage.length + 1}`,
+      id: `${selectedProject._id}-inv${selectedProject.inventoryUsage.length + 1}`,
       itemId: newInventoryUsage.itemId || "",
       itemName: inventoryItem.name,
       quantity: newInventoryUsage.quantity || 0,
@@ -405,7 +403,7 @@ export default function ProjectManagement() {
     }
 
     // Update the projects array
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
 
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
@@ -429,7 +427,7 @@ export default function ProjectManagement() {
     if (!selectedProject || !newRisk.title || !newRisk.description) return
 
     const updatedRisk: Risk = {
-      id: `${selectedProject.id}-risk${selectedProject.risks.length + 1}`,
+      id: `${selectedProject._id}-risk${selectedProject.risks.length + 1}`,
       title: newRisk.title || "",
       description: newRisk.description || "",
       level: (newRisk.level as RiskLevel) || "Medium",
@@ -447,7 +445,7 @@ export default function ProjectManagement() {
     }
 
     // Update the projects array
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
 
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
@@ -492,7 +490,7 @@ export default function ProjectManagement() {
     }
 
     // Update the projects array
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
 
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
@@ -524,7 +522,7 @@ export default function ProjectManagement() {
         dueDate.setDate(today.getDate() + (index + 1) * 14) // Space out due dates by 2 weeks
 
         return {
-          id: `${selectedProject.id}-m${selectedProject.milestones.length + index + 1}`,
+          id: `${selectedProject._id}-m${selectedProject.milestones.length + index + 1}`,
           title: template.title,
           description: template.description,
           dueDate: dueDate.toISOString().split("T")[0],
@@ -540,7 +538,7 @@ export default function ProjectManagement() {
     }
 
     // Update the projects array
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
 
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
@@ -564,7 +562,7 @@ export default function ProjectManagement() {
       ...selectedProject,
       users: [...(selectedProject.users || []), user],
     }
-    const updatedProjects = projects.map((p) => (p.id === selectedProject.id ? updatedProject : p))
+    const updatedProjects = projects.map((p) => (p._id === selectedProject._id ? updatedProject : p))
     setProjects(updatedProjects)
     setFilteredProjects(updatedProjects)
     setSelectedProject(updatedProject)
@@ -655,11 +653,12 @@ export default function ProjectManagement() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      });
-      if (response.ok) {
+      }); console.log ("Projects",response);
+      if (response.ok ) {
         alert("Project created successfully!");
       } else {
         const error = await response.json();
+
         alert(`Error creating project: ${error.message}`);
       }
     } catch (error: unknown) {
@@ -677,6 +676,8 @@ export default function ProjectManagement() {
       setLoading(true)
       try {
         const data = await getProjects()
+        console.log("Fetched projects:", data)
+
         setProjects(data)
         setFilteredProjects(data)
       } catch (error) {
@@ -695,7 +696,7 @@ export default function ProjectManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-600"></div>
+        {/* <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-600"></div> */}
       </div>
     )
   }
@@ -888,19 +889,25 @@ export default function ProjectManagement() {
                       <TableHead>Project ID</TableHead>
                       <TableHead>Project Name</TableHead>
                       <TableHead>Location</TableHead>
+                       <TableHead>County</TableHead>
+                      <TableHead>startDate</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Progress</TableHead>
-                      <TableHead>Target Completion</TableHead>
+                      <TableHead>Target Completion Date</TableHead>
+                      <TableHead>Actual Completion Date</TableHead>
+
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredProjects.length > 0 ? (
                       filteredProjects.map((project) => (
-                        <TableRow key={project.id}>
-                          <TableCell className="font-medium">{project.id}</TableCell>
+                        <TableRow key={project._id}>
+                          <TableCell className="font-medium">{project._id}</TableCell>
                           <TableCell>{project.name}</TableCell>
-                          <TableCell>{project.location}</TableCell>
+                          <TableCell>{project.county}</TableCell>
+                          <TableCell>{project.capacity}</TableCell>
+                          {/* <TableCell>{project.location}</TableCell> */}
                           <TableCell>
                             <Badge
                               className={
@@ -923,6 +930,7 @@ export default function ProjectManagement() {
                             </div>
                           </TableCell>
                           <TableCell>{project.targetCompletionDate}</TableCell>
+                          <TableCell>{project.actualCompletionDate}</TableCell>
                           <TableCell className="text-right">
                             <Button variant="ghost" size="sm" onClick={() => handleViewDetails(project)}>
                               View Details
@@ -936,7 +944,7 @@ export default function ProjectManagement() {
                       </TableRow>
                     )}
                   </TableBody>
-                </Table>
+                </Table>  
               </CardContent>
               <CardFooter className="border-t p-2">
                 <div className="flex-1">
@@ -1093,7 +1101,7 @@ export default function ProjectManagement() {
                 <SheetHeader>
                   <SheetTitle>Project Details</SheetTitle>
                   <SheetDescription>
-                    {selectedProject.id} - {selectedProject.name}
+                    {selectedProject._id} - {selectedProject.name}
                   </SheetDescription>
                 </SheetHeader>
               </div>
@@ -1415,7 +1423,7 @@ export default function ProjectManagement() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => updateMilestoneStatus(selectedProject.id, milestone.id, "Completed")}
+                                      onClick={() => updateMilestoneStatus(selectedProject._id, milestone.id, "Completed")}
                                     >
                                       <CheckCircle2 className="mr-1 h-3 w-3" />
                                       Mark Complete
@@ -1426,7 +1434,7 @@ export default function ProjectManagement() {
                                       variant="outline"
                                       size="sm"
                                       onClick={() =>
-                                        updateMilestoneStatus(selectedProject.id, milestone.id, "In Progress")
+                                        updateMilestoneStatus(selectedProject._id, milestone.id, "In Progress")
                                       }
                                     >
                                       <Clock className="mr-1 h-3 w-3" />
@@ -1437,7 +1445,7 @@ export default function ProjectManagement() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => updateMilestoneStatus(selectedProject.id, milestone.id, "Delayed")}
+                                      onClick={() => updateMilestoneStatus(selectedProject._id, milestone.id, "Delayed")}
                                     >
                                       <XCircle className="mr-1 h-3 w-3" />
                                       Mark Delayed
@@ -1493,16 +1501,11 @@ export default function ProjectManagement() {
                             onChange={e => setSearchTerm(e.target.value)}
                           />
                           <div className="max-h-48 overflow-y-auto border rounded-md bg-background">
-                            {MOCK_USERS.filter(
-                              u =>
-                                !selectedProject.users?.some(assigned => assigned.id === u.id) &&
-                                (u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                  u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-                            ).map(user => (
-                              <div key={user.id} className="flex items-center justify-between px-3 py-2 border-b last:border-b-0">
+                            {selectedProject.users?.map((user,index) => (
+                              <div key={index} className="flex items-center justify-between px-3 py-2 border-b last:border-b-0">
                                 <div>
-                                  <span className="font-medium">{user.name}</span>
-                                  <span className="ml-2 text-xs text-muted-foreground">{user.email}</span>
+                                  <span className="font-medium">{user.firstName}</span>
+                                  <span className="ml-2 text-xs text-muted-foreground">{user.lastName}</span>
                                 </div>
                                 <Button
                                   size="sm"
@@ -1517,14 +1520,7 @@ export default function ProjectManagement() {
                                 </Button>
                               </div>
                             ))}
-                            {MOCK_USERS.filter(
-                              u =>
-                                !selectedProject.users?.some(assigned => assigned.id === u.id) &&
-                                (u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                  u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-                            ).length === 0 && (
-                              <div className="px-3 py-2 text-muted-foreground text-sm">No users found.</div>
-                            )}
+                          
                           </div>
                         </div>
                       </div>

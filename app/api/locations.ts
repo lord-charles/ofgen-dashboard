@@ -1,26 +1,63 @@
-export async function createLocation(locationData: any) {
-  const response = await fetch("https://ofgen.cognitron.co.ke/ofgen/api/locations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(locationData),
-  })
+"use server";
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || "Failed to create location")
-  }
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import axios, { AxiosError } from "axios";
 
-  return response.json()
+
+export async function handleUnauthorized() {
+  "use server";
+  redirect("/unauthorized");
 }
 
-export async function fetchLocations() {
-  const response = await fetch("https://ofgen.cognitron.co.ke/ofgen/api/locations")
-  if (!response.ok) {
-    throw new Error("Failed to fetch locations")
+const getAxiosConfig = async () => {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token");
+  return {
+    headers: {
+      Authorization: token ? `Bearer ${token.value} ` : "",
+      "Content-Type": "application/json",
+    },
+  };    
+};
+
+export async function fetchLocations()  {
+  try {
+
+    const config = await getAxiosConfig();
+    const response = await axios.get(
+    `  ${process.env.NEXT_PUBLIC_API_URL}/locations `,
+      config
+    );
+    console.log("Response data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch Sites:", error);
+    if (error instanceof AxiosError && error.response?.status === 401) {
+      await handleUnauthorized();
+    }
+
+    return { data: [] };
   }
-  return response.json()
+}
+export async function postLocations({data}: any)  {
+  try {
+
+    const config = await getAxiosConfig();
+    const response = await axios.post(
+    `  ${process.env.NEXT_PUBLIC_API_URL}/locations `,
+      data,config
+    );
+    console.log("Response data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to Create Site:", error);
+    if (error instanceof AxiosError && error.response?.status === 401) {
+      await handleUnauthorized();
+    }
+
+    return { data: [] };
+  }
 }
 
 export async function fetchLocationById(id: string) {

@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, Search, LocateFixed, Loader2 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { createLocation } from "@/api/locations"
+import { postLocations } from "@/app/api/locations"
 
 // Mock data for counties in Kenya
 const KENYA_COUNTIES = [
@@ -177,7 +177,7 @@ export default function AddSitePage() {
     }
 
     try {
-      await createLocation({
+      await postLocations({
         name: formData.name,
         county: formData.county,
         address: formData.address,

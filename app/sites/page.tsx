@@ -291,7 +291,7 @@ export default function SitesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Site ID</TableHead>
+                  {/* <TableHead>Site ID</TableHead> */}
                   <TableHead>Name</TableHead>
                   <TableHead>County</TableHead>
                   <TableHead>Address</TableHead>
@@ -302,9 +302,8 @@ export default function SitesPage() {
               <TableBody>
                 {currentSites.length > 0 ? (
                   currentSites.map((site) => (
-                    <TableRow key={site.id}>
-                      <TableCell className="font-medium">{site.id}</TableCell>
-                      <TableCell>{site.name}</TableCell>
+                    <TableRow key={site.name}>
+                      <TableCell className="font-medium">{site.name}</TableCell>
                       <TableCell>{site.county}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{site.address}</TableCell>
                       <TableCell>
